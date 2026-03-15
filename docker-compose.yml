@@ -1,7 +1,4 @@
-version: "3.9"
-
 services:
-  # ── PostgreSQL ────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: app_db
@@ -12,19 +9,18 @@ services:
       POSTGRES_DB: appdb
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"          # expose locally for Prisma Studio / GUI clients
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - internal
 
-  # ── Migration runner (runs once, then exits) ──────────────
   migrate:
     build:
       context: .
-      target: builder          # reuse the builder stage – has prisma CLI + schema
+      target: builder
     container_name: app_migrate
     command: >
       sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
@@ -34,24 +30,32 @@ services:
       db:
         condition: service_healthy
     restart: "no"
+    networks:
+      - internal
 
-  # ── Next.js application ───────────────────────────────────
   app:
     build:
       context: .
       target: runner
     container_name: app_web
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       AUTH_SECRET: ${AUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://template.kozmyc.fun}
       NODE_ENV: production
     depends_on:
       migrate:
         condition: service_completed_successfully
+    networks:
+      - internal
+      - web_network
 
 volumes:
   postgres_data:
+
+networks:
+  internal:
+    driver: bridge
+  web_network:
+    external: true
