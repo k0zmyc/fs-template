@@ -10,5 +10,5 @@ export default async function UsersPage() {
     select: { id: true, name: true, email: true, role: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
-  return <UsersClient initialUsers={users as any} currentUserId={session!.user!.id!} />;
+  return <UsersClient initialUsers={users} currentUserId={session!.user!.id!} />;
 }
