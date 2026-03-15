@@ -13,5 +13,5 @@ export default async function CollectionsPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  return <CollectionsClient initialCollections={collections} userId={userId} isAdmin={isAdmin} />;
+  return <CollectionsClient initialCollections={collections as any} userId={userId} isAdmin={isAdmin} />;
 }
