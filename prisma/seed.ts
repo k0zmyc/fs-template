@@ -18,6 +18,13 @@ async function main() {
     create: { email: "user@example.com", name: "Regular User", password, role: "USER" },
   });
 
+  // Only seed collections if none exist yet
+  const existingCount = await prisma.collection.count();
+  if (existingCount > 0) {
+    console.log(`✅ Seed skipped — ${existingCount} collections already exist`);
+    return;
+  }
+
   const col1 = await prisma.collection.create({
     data: {
       name: "Film Library",
@@ -30,12 +37,7 @@ async function main() {
         { name: "rating", type: "select", label: "Rating", options: ["1", "2", "3", "4", "5"] },
         { name: "watched", type: "boolean", label: "Watched" },
       ],
-      members: {
-        create: [
-          { userId: admin.id, role: "OWNER" },
-          { userId: user.id, role: "VIEWER" },
-        ],
-      },
+      members: { create: [{ userId: admin.id, role: "OWNER" }, { userId: user.id, role: "VIEWER" }] },
     },
   });
 
@@ -50,12 +52,7 @@ async function main() {
         { name: "status", type: "select", label: "Status", options: ["To Read", "Reading", "Finished"] },
         { name: "notes", type: "textarea", label: "Notes" },
       ],
-      members: {
-        create: [
-          { userId: admin.id, role: "OWNER" },
-          { userId: user.id, role: "EDITOR" },
-        ],
-      },
+      members: { create: [{ userId: admin.id, role: "OWNER" }, { userId: user.id, role: "EDITOR" }] },
     },
   });
 
@@ -65,10 +62,6 @@ async function main() {
       { collectionId: col1.id, title: "Interstellar", data: { director: "Christopher Nolan", year: 2014, genre: "Sci-Fi", rating: "5", watched: true }, createdById: admin.id },
       { collectionId: col2.id, title: "Dune", data: { author: "Frank Herbert", pages: 412, status: "Finished", notes: "Epic world-building" }, createdById: admin.id },
     ],
-  });
-
-  await prisma.auditLog.create({
-    data: { action: "CREATE", entityType: "Collection", entityId: col1.id, entityLabel: col1.name, userId: admin.id, collectionId: col1.id },
   });
 
   console.log("✅ Seed complete");
