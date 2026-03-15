@@ -1,0 +1,23 @@
+version: "3.9"
+
+# Development override – mounts source code for hot-reload
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  app:
+    build:
+      context: .
+      target: deps             # only install deps, don't build
+    command: npm run dev
+    volumes:
+      - .:/app                 # live source mount
+      - /app/node_modules      # keep container's node_modules
+      - /app/.next             # keep .next build cache
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+
+  db:
+    ports:
+      - "5432:5432"

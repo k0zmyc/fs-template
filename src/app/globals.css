@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  ::selection { background: #6366f1; color: white; }
+}
+
+@layer components {
+  .input {
+    @apply w-full px-3.5 py-2.5 rounded-lg bg-zinc-950 border border-zinc-700 text-zinc-100
+           placeholder-zinc-600 focus:outline-none focus:border-indigo-500 focus:ring-1
+           focus:ring-indigo-500 transition-colors text-sm;
+  }
+  .label {
+    @apply block text-sm font-medium text-zinc-300 mb-1.5;
+  }
+}

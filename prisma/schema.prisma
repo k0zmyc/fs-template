@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String     @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          GlobalRole @default(USER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  memberships   CollectionMember[]
+  auditLogs     AuditLog[]
+  records       Record[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  icon        String?
+  coverImage  String?
+  fieldSchema Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  members     CollectionMember[]
+  records     Record[]
+  auditLogs   AuditLog[]
+}
+
+model CollectionMember {
+  id           String         @id @default(cuid())
+  collectionId String
+  userId       String
+  role         CollectionRole @default(VIEWER)
+  createdAt    DateTime       @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([collectionId, userId])
+}
+
+model Record {
+  id           String   @id @default(cuid())
+  collectionId String
+  title        String
+  imageUrl     String?
+  data         Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdBy    User       @relation(fields: [createdById], references: [id])
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  action       AuditAction
+  entityType   String
+  entityId     String
+  entityLabel  String?
+  diff         Json?
+  userId       String
+  collectionId String?
+  recordId     String?
+  createdAt    DateTime    @default(now())
+  user         User        @relation(fields: [userId], references: [id])
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  record       Record?     @relation(fields: [recordId], references: [id], onDelete: SetNull)
+}
+
+enum GlobalRole {
+  USER
+  ADMIN
+}
+
+enum CollectionRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  INVITE
+  REMOVE
+  LOGIN
+}
